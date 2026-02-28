@@ -92,47 +92,50 @@
             });
         });
 
-        // Lógica de subida corregida
-        document.getElementById('btn-subir').addEventListener('click', async () => {
-            const fileInput = document.getElementById('file-input');
-            const status = document.getElementById('status');
-            
-            if (fileInput.files.length === 0) return alert("Selecciona una foto primero");
+ // Lógica de subida CORREGIDA
+document.getElementById('btn-subir').addEventListener('click', async () => {
+    const fileInput = document.getElementById('file-input');
+    const status = document.getElementById('status');
+    
+    if (fileInput.files.length === 0) return alert("Selecciona una foto primero");
 
-            status.style.display = "block";
-            status.innerText = "Mandando a la nube... ✈️";
+    status.style.display = "block";
+    status.innerText = "Mandando a la nube... ✈️";
 
-            const formData = new FormData();
-            // CORRECCIÓN: Usamos files para enviar el archivo real
-            formData.append('file', fileInput.files);
-            formData.append('upload_preset', 'fotos_viaje');
+    const formData = new FormData();
+    
+    // EL CAMBIO ESTÁ AQUÍ: 
+    // Usamos fileInput.files para mandar el archivo, no la lista completa.
+    formData.append('file', fileInput.files);
+    formData.append('upload_preset', 'fotos_viaje');
 
-            try {
-                const res = await fetch('https://api.cloudinary.com/v1_1/dd85divuk/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.error.message);
-                }
-
-                const data = await res.json();
-
-                await db.collection("fotos").add({
-                    url: data.secure_url,
-                    fecha: new Date()
-                });
-
-                status.innerText = "¡Subida con éxito! ✅";
-                fileInput.value = "";
-                setTimeout(() => { status.style.display = "none"; }, 3000);
-
-            } catch (err) {
-                status.innerText = "Error: " + err.message + " ❌";
-            }
+    try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/dd85divuk/upload', {
+            method: 'POST',
+            body: formData
         });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error.message);
+        }
+
+        const data = await res.json();
+
+        // Guardar en Firestore para que todos la vean
+        await db.collection("fotos").add({
+            url: data.secure_url,
+            fecha: new Date()
+        });
+
+        status.innerText = "¡Subida con éxito! ✅";
+        fileInput.value = "";
+        setTimeout(() => { status.style.display = "none"; }, 3000);
+
+    } catch (err) {
+        status.innerText = "Error: " + err.message + " ❌";
+    }
+});
     </script>
 </body>
 </html>
