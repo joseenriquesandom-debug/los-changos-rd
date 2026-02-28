@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(180deg, #ff5f6d, #ffc371);
             background-attachment: fixed;
             display: flex;
@@ -16,11 +16,7 @@
             padding: 20px;
             min-height: 100vh;
         }
-        h1 {
-            color: #1a4d44;
-            font-size: 24px;
-            margin-bottom: 30px;
-        }
+        h1 { color: #1a4d44; font-size: 24px; margin-bottom: 30px; }
         .upload-card {
             background: #e9edeb;
             padding: 30px;
@@ -29,15 +25,7 @@
             width: 320px;
             text-align: center;
         }
-        .upload-card h2 {
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-        input[type="file"] {
-            margin-bottom: 20px;
-            width: 100%;
-        }
+        input[type="file"] { margin-bottom: 20px; width: 100%; }
         #btn-subir {
             background-color: #9bc8d5;
             color: white;
@@ -47,15 +35,8 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            font-size: 16px;
         }
-        #status {
-            color: #1a4d44;
-            font-size: 14px;
-            margin-top: 15px;
-            font-weight: bold;
-            display: none;
-        }
+        #status { color: #1a4d44; font-weight: bold; margin-top: 15px; display: none; }
         #galeria {
             margin-top: 40px;
             display: grid;
@@ -65,11 +46,8 @@
             max-width: 900px;
         }
         .foto-item {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 4px solid white;
+            width: 100%; height: 180px; object-fit: cover;
+            border-radius: 12px; border: 4px solid white;
         }
     </style>
 </head>
@@ -102,6 +80,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Cargar fotos en tiempo real
         db.collection("fotos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
             const galeria = document.getElementById("galeria");
             galeria.innerHTML = "";
@@ -113,6 +92,7 @@
             });
         });
 
+        // Lógica de subida corregida
         document.getElementById('btn-subir').addEventListener('click', async () => {
             const fileInput = document.getElementById('file-input');
             const status = document.getElementById('status');
@@ -123,7 +103,7 @@
             status.innerText = "Mandando a la nube... ✈️";
 
             const formData = new FormData();
-            // CORRECCIÓN: Se agrega el archivo real (fileInput.files) no la lista
+            // CORRECCIÓN: Usamos files para enviar el archivo real
             formData.append('file', fileInput.files);
             formData.append('upload_preset', 'fotos_viaje');
 
@@ -134,8 +114,8 @@
                 });
 
                 if (!res.ok) {
-                    const errDetail = await res.json();
-                    throw new Error(errDetail.error.message);
+                    const errorData = await res.json();
+                    throw new Error(errorData.error.message);
                 }
 
                 const data = await res.json();
@@ -150,7 +130,6 @@
                 setTimeout(() => { status.style.display = "none"; }, 3000);
 
             } catch (err) {
-                console.error(err);
                 status.innerText = "Error: " + err.message + " ❌";
             }
         });
