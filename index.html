@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería Privada: Los Changos</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: linear-gradient(180deg, #ff5f6d, #ffc371); background-attachment: fixed; display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        h1 { color: #1a4d44; text-shadow: 1px 1px 2px white; margin-bottom: 20px; }
+        .upload-card { background: #f0f4f3; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; margin-bottom: 30px; }
+        #btn-subir { background-color: #2a9d8f; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        #btn-subir:hover { background-color: #21867a; }
+        #status { color: #1a4d44; font-weight: bold; margin-top: 15px; padding: 10px; border-radius: 8px; display: none; }
+        #galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; }
+        .foto-item { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 15px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h1>📸 Los Changos en RD 🇩🇴</h1>
+
+    <div class="upload-card">
+        <h3>¡Sube tus fotos! 🐒</h3>
+        <input type="file" id="file-input" accept="image/*">
+        <button id="btn-subir">Subir a la Galería</button>
+        <p id="status"></p>
+    </div>
+
+    <div id="galeria"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDK0cq715tzvGWKfL3vdcf2HOf_j9Pd8Rw",
+            authDomain: "los-changos-rd.firebaseapp.com",
+            projectId: "los-changos-rd",
+            storageBucket: "los-changos-rd.appspot.com",
+            messagingSenderId: "782635419012",
+            appId: "1:782635419012:web:6f8d2b3a1e9c4d0f"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Mostrar fotos en tiempo real
+        db.collection("fotos").orderBy("fecha", "desc").onSnapshot((snapshot) => {
+            const galeria = document.getElementById("galeria");
+            galeria.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const img = document.createElement("img");
+                img.src = doc.data().url;
+                img.className = "foto-item";
+                galeria.appendChild(img);
+            });
+        });
+
+        // Lógica de subida definitiva
+        document.getElementById('btn-subir').addEventListener('click', async () => {
+            const fileInput = document.getElementById('file-input');
+            const status = document.getElementById('status');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return alert("Selecciona una foto primero 📸");
+            }
+
+            const archivo = fileInput.files; 
+            status.style.display = "block";
+            status.style.background = "#d1ecf1";
+            status.innerText = "Mandando a la nube... ✈️";
+
+            const formData = new FormData();
+            formData.append('file', archivo); 
+            formData.append('upload_preset', 'fotos_viaje'); 
+
+            try {
+                const res = await fetch('https://api.cloudinary.com/v1_1/dd85divuk/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ? data.error.message : "Error en Cloudinary");
+
+                await db.collection("fotos").add({
+                    url: data.secure_url,
+                    fecha: new Date()
+                });
+
+                status.innerText = "¡Subida con éxito! ✅";
+                status.style.background = "#d4edda";
+                fileInput.value = ""; 
+
+            } catch (err) {
+                status.innerText = "Error: " + err.message + " ❌";
+                status.style.background = "#f8d7da";
+            } finally {
+                setTimeout(() => { status.style.display = "none"; }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>
